@@ -34,7 +34,7 @@
     return cmpsi($.get(a));
   }
   
-  cmpf("/codes/libjs/lisp-cmp-core/devel/lisp-cmp-core.lisp");
+  cmpf("lib/lisp-cmp-core.lisp");
   
   ////// Object exposure //////
   
