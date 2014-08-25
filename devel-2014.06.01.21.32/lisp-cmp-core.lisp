@@ -1,0 +1,199 @@
+(js-mac mac a `(js-mac ,@a))
+(mac exe a `(js-exe ,@a))
+
+(mac dfn a `(exe (def ,@a)))
+(mac dmc a `(exe (mac ,@a)))
+
+(mac dot () `|.|)
+
+(mac alias a
+  `(do ,@(map [alias1 (car _) (cadr _)] (grp a 2))))
+
+(dfn alias1 (new old)
+  `(mac ,new #a `(,,old ,@#a)))
+
+(mac jsali a
+  `(alias ,@(fla (map jsali1 a))))
+
+(dfn jsali1 (a)
+  (lis a (app 'js- a)))
+
+(jsali + - * / _ ++ --
+       and or not del
+       = += -= *= /= _=
+       < > >= <=
+       inst is isn
+       arr obj lis
+       |.| #
+       var fn rfn def new
+       if do whi foi swt cas brk cont
+       ret thr nrt
+       exe qt)
+
+(mac let (a x . bd)
+  `((fn (,a) ,@bd) ,x))
+
+(mac with (vs . bd)
+  (let g (grp vs 2)
+    `((fn ,(map car g) ,@bd) ,@(map cadr g))))
+
+(mac withs (vs . bd)
+  (if (no vs) `(do ,@bd)
+      `(let ,(car vs) ,(cadr vs)
+         (with ,(cddr vs) ,@bd))))
+
+(mac blk a
+  `((fn () ,@a)))
+
+(mac dec a
+  `(var ,@(afta a nil)))
+
+(mac wgs (nm . bd)
+  (symlis nm
+    `(with ,(afta nm '(gs)) ,@bd)))
+
+(mac afn (ag . bd)
+  `(rfn self ,ag ,@bd))
+
+(mac ngs (n v . bd)
+  `(let ,v (mkngs ,n) ,@bd))
+
+(mac once (vs . bd)
+  (symlis vs
+    (ngs (len vs) gens
+      `(with ,(fla (par gens (map [qq (if (sym? ,_) ,_ (gs))] vs)))
+         (gswith (lis ,@gens) (lis ,@vs)
+           (with ,(fla (par vs gens)) ,@bd))))))
+
+(dmc surblk (a)
+  `(if (blk?) ,a
+       `(blk ,,(auq a))))
+
+(mac loop (st p up . bd)
+  (surblk `(js-loop ,st ,p ,up ,@bd)))
+
+(mac for (i n m . bd)
+  (once (n m)
+    `(loop (var ,i ,n) (<= ,i ,m) (++ ,i) ,@bd)))
+
+(mac down (i n m . bd)
+  (once (n m)
+    `(loop (var ,i ,n) (>= ,i ,m) (-- ,i) ,@bd)))
+
+(mac to (i n . bd)
+  (once n
+    `(loop (var ,i 0) (< ,i ,n) (++ ,i) ,@bd)))
+
+(mac fr (i n . bd)
+  `(down ,i ,n 0 ,@bd))
+
+(mac ind (i a . bd)
+  `(to ,i (len ,a) ,@bd))
+
+(mac inr (i a . bd)
+  `(fr ,i (- (len ,a) 1) ,@bd))
+
+(mac each (x a . bd)
+  (once a
+    `(let ,x nil
+       (ind #i ,a
+         (= ,x #(,a #i))
+         ,@bd))))
+
+(mac eacr (x a . bd)
+  (once a
+    `(let ,x nil
+       (inr #i ,a
+         (= ,x #(,a #i))
+         ,@bd))))
+
+(mac rep (n . bd)
+  `(down #i ,n 1 ,@bd))
+
+(mac when (ts . bd)
+  `(if ,ts (do ,@bd)))
+
+(mac stk (a x . bd)
+  `(do (psh ,x ,a)
+       (var #ret (do ,@bd))
+       (pop ,a)
+       #ret))
+
+(mac dyn (a x . bd)
+  `(do (var #ori ,a)
+       (= ,a ,x)
+       (var #ret (do ,@bd))
+       (= ,a #ori)
+       #ret))
+
+; (in x 1 2 3) -> (or (is x 1) (is x 2) (is x 3)
+(mac in (x . a)
+  (once x
+    `(or ,@(map [qq (is ,x ,_)] a))))
+
+(mac inl (nm ag . bd)
+  `(mac ,nm ,ag
+     `(do ,,@(let p (pnms ag)
+               (dmap [if (has _ p) (auq _) _] bd)))))
+
+(mac dfm (nm ag . bd)
+  `(do (def ,nm ,ag ,@bd)
+       (inl ,nm ,ag ,@bd)))
+
+(mac imp (x . a)
+  `(do ,@(map [mkimp x _] a)))
+
+(dfn mkimp (x a)
+  `(var ,a (. ,x ,a)))
+
+(mac jn (ag . bd)
+  `(fn ,ag (nrt (do ,@bd))))
+
+(mac dej (nm ag . bd)
+  `(def ,nm ,ag (nrt (do ,@bd))))
+
+(mac &= (x a)
+  `(= ,a (+ ,x ,a)))
+
+(mac zap (f a . rst)
+  `(= ,a (,f ,a ,@rst)))
+
+(mac swap (a b)
+  `(let #c ,a
+     (= ,a ,b)
+     (= ,b #c)))
+
+(mac nfn (a) `(fn (_) ,a))
+
+(mac psh (x a)
+  `(= ,a (app ,a ,x)))
+
+; accumulate
+(mac accum (f . bd)
+  `(wits (#var [] ,f [psh _ #var])
+     ,@bd
+     #var))
+
+; Repeatedly evaluates its body till it returns nil, then returns vals.
+
+(mac drai (ex (o eof nil))
+  `(with (#acc #[] #done false)
+     (whi !#done
+       (let #res ,ex
+         (if (is #res ,eof)
+             (= #done true)
+             (psh #res #acc))))
+     #acc))
+
+(mac whir (var ex end . bd)
+  `(wit (,var nil #f (tfn ,end))
+     (whi !(#f (= ,var ,ex)) ,@bd)))
+
+(mac chk (x tst (o alt))
+  (once x `(if (,tst ,x) ,x ,alt)))
+
+(mac nof (n a)
+  `(let #r (emp ,a)
+     (rep ,n (psh ,a #r))
+     #r))
+

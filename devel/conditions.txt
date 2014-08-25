@@ -1,0 +1,90 @@
+(define-condition t-err (error)
+  ((text :initarg :text :reader text)))
+
+(defun test ()
+  (handler-bind ((t-err #'(lambda (c) (invoke-restart 'hey 3))))
+    (test2)))
+    
+(defun test2 ()
+  (handler-bind ((t-err #'(lambda (c) 456)))
+    (test3)))
+
+(defun test3 ()
+  (restart-case (error 't-err :text "345")
+    (hey (v) v)))
+    
+(cond t-err (error)
+  ((text :initarg :text :reader text)))
+
+(defun test ()
+  (handler-bind ((t-err #'(lambda (c) (invoke-restart 'hey 3))))
+    (test2)))
+    
+(defun test2 ()
+  (handler-bind ((t-err #'(lambda (c) 456)))
+    (test3)))
+
+(defun test3 ()
+  (restart-case (error 't-err :text "345")
+    (hey (v) v)))
+    
+(handler-bind ((t-err #'(lambda (c) (invoke-restart 'do-stuff 3))))
+  (restart-case
+      (restart-case (error 't-err :text 5)
+        (do-stuff (a) (print 5) a))
+    (use-value (v) v)))
+
+function test(){
+  var rsts = {};
+  var hndl = {};
+  hndl["t-err"] = function (c){
+                    if (rsts["do-stuff"] !== undefined)return rsts["do-stuff"](3);
+                    throw c;
+                  };
+  try {
+    try {
+      throw ["t-err", 5];
+    } catch (e){
+      rsts["do-stuff"] = function (a){alert(5); return a;};
+      if (hndl[e[0]] !== undefined)return hndl[e[0]](e);
+      throw e;
+    }
+  } catch (e){
+    rsts["use-value"] = function (v){return v;};
+    if (hndl[e[0]] !== undefined)return hndl[e[0]](e);
+  }
+}
+alert(test());
+
+(handler-case (thr (tg 't-err 1 2 3))
+  (t-err (e) e))
+
+(try (thr (tg 't-err 1 2 3))
+  gs1 (case (typ gs1)
+        't-err ((fn (e) e) gs1)
+        (thr gs1)))
+
+(mac handler-case (x . a)
+  (wgs e
+    `(try ,x
+       ,e (case (typ ,e)
+            ,@(fla (map [qq (',(car _) ((fn ,@(cdr _)) ,e))] a))
+            (thr ,e)))))
+
+(restart (thr (tg 't-err 1 2 3))
+  (use-value (v) v))
+
+(try (thr (tg 't-err 1 2 3))
+  gs1 (do (= #(gs2 "use-value") (fn (v) v))
+          (let gs4 #(gs3 (typ gs1))
+            (if (isn gs4 undefined) (gs4 gs1)
+                (thr gs1)))))
+          
+(varn hndl (gs))
+(varn rsts (gs))
+(mac restart (x . a)
+  `(try ,x
+     #e (do ,@(map [qq (= #(,rsts ',(car _)) (fn ,@(cdr _)))] a)
+            (let hndlr #(,hndl (typ #e))
+              (if (isn hndlr undefined) (hndlr #e)
+                  (thr #e))))))
