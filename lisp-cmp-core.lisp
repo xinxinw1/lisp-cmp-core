@@ -461,3 +461,36 @@
     'exe `(do ,@a)
     'cmp `(exe ,@a)
     (err mkon1 "Unknown sym = $1" sym)))
+
+(mac over (nm ag . bd)
+  `(let sup ,nm
+     (= ,nm (fn ,ag ,@bd))))
+
+(mac app= (a . rst)
+  `(= ,a (app ,a ,@rst)))
+
+(mac tostr a
+  `(let #s ""
+     (dyn *out* [app= #s _]
+       ,@a
+       #s)))
+
+(mac unless (ts . bd)
+  `(when (not ,ts)
+     ,@bd))
+
+(mac bef (nm ag . bd)
+  `(over ,nm #a
+     (apl (fn ,ag ,@bd) #a)
+     (apl sup #a)))
+
+(mac aft (nm ag . bd)
+  `(over ,nm #a
+     (apl sup #a)
+     (apl (fn ,ag ,@bd) #a)))
+
+(mac do1 a
+  (if (no a) nil
+      `(let #r ,(car a)
+         ,@(cdr a)
+         #r)))
